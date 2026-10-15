@@ -77,6 +77,23 @@ class CatalogController extends ChangeNotifier {
     }
   }
 
+  /// Recarga en silencio (sin spinner ni vaciar la lista) el catálogo y las
+  /// categorías. Se usa al volver del detalle/formulario, porque ahora los
+  /// cambios (crear, editar, eliminar) son reales y deben verse en la lista.
+  Future<void> refresh() async {
+    try {
+      final result = _selectedCategory != null
+          ? await _api.getProductsByCategory(_selectedCategory!)
+          : await _api.getAllProducts();
+      _products = result;
+      _errorMessage = null;
+      notifyListeners();
+    } catch (_) {
+      // Si falla, se conserva la lista actual sin molestar al usuario.
+    }
+    await _loadCategories();
+  }
+
   Future<void> _fetch(Future<List<Product>> Function() request) async {
     // Gestión de memoria (US04): se limpia el arreglo anterior ANTES de
     // lanzar la nueva petición, para que la vista nunca muestre datos

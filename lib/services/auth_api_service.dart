@@ -1,35 +1,47 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
-/// Capa de acceso a la Fake Store API.
+/// Capa de acceso al backend para autenticación (US01).
 ///
-/// Responsabilidad única: hablar HTTP con https://fakestoreapi.com.
+/// Responsabilidad única: hablar HTTP con POST /api/auth/login.
 /// No conoce nada de UI ni de reglas de negocio (eso vive en el controller).
 class AuthApiService {
-  static const String _baseUrl = 'https://fakestoreapi.com';
-
   /// Autentica contra POST /auth/login.
-  /// Devuelve el token si la API responde 200 OK.
-  /// Lanza [InvalidCredentialsException] en 401 (o similar) y
-  /// [ApiException] para cualquier otro error HTTP.
-  Future<String> login({
+  /// El backend verifica usuario y contraseña en MySQL y responde con
+  /// `{ "token": "...", "user": { id, username, email, name, phone, role } }`.
+  ///
+  /// Lanza [InvalidCredentialsException] en 401/400 y [ApiException] para
+  /// cualquier otro error (red o servidor).
+  Future<Map<String, dynamic>> login({
     required String username,
     required String password,
   }) async {
-    final uri = Uri.parse('$_baseUrl/auth/login');
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/login');
+
+    late http.Response response;
+    try {
+      response = await http
+          .post(
+            uri,
+            headers: ApiConfig.headers(json: true),
+            body: jsonEncode({'username': username, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      throw ApiException(
+        'No se pudo conectar con el servidor (${ApiConfig.baseUrl}). '
+        'Verifica que el backend esté encendido y que el celular esté en la misma red Wi-Fi.',
+      );
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final Map<String, dynamic> body = jsonDecode(response.body);
       final token = body['token']?.toString();
-      if (token == null || token.isEmpty) {
-        throw ApiException('La API no devolvió un token válido.');
+      if (token == null || token.isEmpty || body['user'] is! Map) {
+        throw ApiException('El servidor no devolvió una sesión válida.');
       }
-      return token;
+      return body;
     }
 
     if (response.statusCode == 401 || response.statusCode == 400) {
@@ -37,34 +49,6 @@ class AuthApiService {
     }
 
     throw ApiException('Error del servidor (${response.statusCode}).');
-  }
-
-  /// Verifica los datos ingresados contra GET /users, tal como pide el
-  /// requerimiento: se descarga la lista de usuarios de
-  /// https://fakestoreapi.com/users y se busca el registro cuyo
-  /// username coincide (comparación case-insensitive), para así obtener
-  /// el ID real con el que se hace el mapeo local de roles.
-  Future<Map<String, dynamic>> findUserByUsername(String username) async {
-    final uri = Uri.parse('$_baseUrl/users');
-    final response = await http.get(uri);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ApiException('No se pudo obtener la lista de usuarios (${response.statusCode}).');
-    }
-
-    final List<dynamic> users = jsonDecode(response.body);
-    final match = users.firstWhere(
-      (u) => (u['username']?.toString().toLowerCase() ?? '') ==
-          username.toLowerCase(),
-      orElse: () => null,
-    );
-
-    if (match == null) {
-      // El usuario no existe en la base de Fake Store API.
-      throw InvalidCredentialsException();
-    }
-
-    return Map<String, dynamic>.from(match);
   }
 }
 

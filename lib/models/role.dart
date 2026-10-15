@@ -19,7 +19,7 @@ extension RoleMapper on Role {
   }
 
   /// Asigna el rol de forma local en base al ID numérico del usuario
-  /// devuelto por la Fake Store API. Esta es la única fuente de verdad
+  /// devuelto por la API. Esta es la única fuente de verdad
   /// para el mapeo de roles (regla de negocio de US01).
   static Role fromUserId(int id) {
     if (id == 1 || id == 2) return Role.administrador;

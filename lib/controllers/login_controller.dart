@@ -6,8 +6,9 @@ import '../services/connectivity_service.dart';
 
 /// Controller de la vista de Login (patrón MVC).
 ///
-/// Orquesta: 1) verificación de red, 2) llamada a /auth/login,
-/// 3) verificación del usuario contra /users, 4) mapeo local de rol.
+/// Orquesta: 1) verificación de red, 2) llamada a POST /auth/login del
+/// backend (que valida usuario y contraseña contra MySQL), 3) construcción
+/// del modelo de dominio y mapeo local de rol.
 /// La Vista solo debe llamar a [login] y reaccionar a [isLoading] /
 /// al [LoginResult] devuelto; no conoce detalles de HTTP.
 class LoginController extends ChangeNotifier {
@@ -39,14 +40,14 @@ class LoginController extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      // 1) Autenticación real contra /auth/login
-      final token = await _api.login(username: username, password: password);
+      // 1) Autenticación contra el backend (verifica en la base de datos).
+      final data = await _api.login(username: username, password: password);
 
-      // 2) Verificación/descarga de datos del usuario contra /users
-      final userJson = await _api.findUserByUsername(username);
-
-      // 3) Mapeo local de rol + construcción del modelo de dominio
-      final user = UserModel.fromApi(userJson: userJson, token: token);
+      // 2) Construcción del modelo de dominio + mapeo local de rol por id.
+      final user = UserModel.fromApi(
+        userJson: Map<String, dynamic>.from(data['user'] as Map),
+        token: data['token'].toString(),
+      );
 
       return LoginResult.success(user);
     } on InvalidCredentialsException {

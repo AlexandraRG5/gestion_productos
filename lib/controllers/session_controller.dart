@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import '../services/api_config.dart';
 import '../services/secure_storage_service.dart';
 
 /// Estado global de sesión (patrón "Controller" de MVC).
@@ -20,12 +21,14 @@ class SessionController extends ChangeNotifier {
   /// Útil al abrir la app (auto-login).
   Future<void> restoreSession() async {
     _currentUser = await _storage.readSession();
+    ApiConfig.authToken = _currentUser?.token;
     notifyListeners();
   }
 
   /// Se llama tras un login exitoso (US01 - Escenario 1).
   Future<void> startSession(UserModel user) async {
     _currentUser = user;
+    ApiConfig.authToken = user.token;
     await _storage.saveSession(user);
     notifyListeners();
   }
@@ -39,6 +42,7 @@ class SessionController extends ChangeNotifier {
   Future<void> logout() async {
     await _storage.clearSession();
     _currentUser = null;
+    ApiConfig.authToken = null; // US02: el token no debe sobrevivir en memoria.
     CartController.instance.reset();
     notifyListeners();
   }

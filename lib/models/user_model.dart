@@ -28,16 +28,16 @@ class UserModel {
       .where((part) => part.trim().isNotEmpty)
       .join(' ');
 
-  /// Construye el modelo combinando la respuesta de /auth/login (token)
-  /// con la información obtenida de /users (id, username, email, nombre,
-  /// apellido y teléfono) y aplicando la regla local de mapeo de roles.
+  /// Construye el modelo con la respuesta de POST /auth/login del backend
+  /// (token + id, username, email, nombre, apellido y teléfono) y aplica
+  /// la regla local de mapeo de roles por id.
   factory UserModel.fromApi({
     required Map<String, dynamic> userJson,
     required String token,
   }) {
     final int id = userJson['id'] as int;
 
-    // El campo "name" en fakestoreapi.com/users viene anidado:
+    // El campo "name" viene anidado en el JSON del backend:
     // "name": { "firstname": "...", "lastname": "..." }
     final Map<String, dynamic> name =
         (userJson['name'] as Map<String, dynamic>?) ?? const {};

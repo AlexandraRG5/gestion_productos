@@ -12,16 +12,14 @@ import 'product_detail_view.dart';
 /// - US04: fila de chips deslizable con las categorías disponibles
 ///   (incluye "Todas" para remover el filtro), que dispara el filtrado
 ///   sin bloquear la visibilidad del resto de la pantalla.
+///
+/// El [CatalogController] lo provee HomeView (así el botón "Nuevo producto"
+/// también puede pedir un refresco del catálogo al volver).
 class CatalogView extends StatelessWidget {
   const CatalogView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CatalogController()..initialize(),
-      child: const _CatalogBody(),
-    );
-  }
+  Widget build(BuildContext context) => const _CatalogBody();
 }
 
 class _CatalogBody extends StatelessWidget {
@@ -155,9 +153,14 @@ class _ProductCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ProductDetailView(productId: product.id)),
-        ),
+        onTap: () async {
+          final catalog = context.read<CatalogController>();
+          await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => ProductDetailView(productId: product.id)),
+          );
+          // Al volver (tras editar o eliminar) se refleja el cambio real.
+          catalog.refresh();
+        },
         child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(

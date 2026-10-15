@@ -7,7 +7,7 @@ import '../services/product_api_service.dart';
 /// No conoce nada sobre roles: la decisión de qué controles mostrar
 /// (Editar/Eliminar) vive en la Vista, que lee el rol directamente de
 /// la sesión local (SessionController), tal como exige la regla de
-/// negocio de US05 ("no delegar la validación a la Fake Store API").
+/// negocio de US05 ("no delegar la validación a la API").
 /// Aun así, `delete()` exige explícitamente `isAdmin` como defensa
 /// adicional a nivel de código (US08, Escenario 3).
 class ProductDetailController extends ChangeNotifier {

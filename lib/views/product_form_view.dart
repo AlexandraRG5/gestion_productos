@@ -257,11 +257,11 @@ class _ProductFormBody extends StatelessWidget {
 
       if (!context.mounted) return;
       if (updated != null) {
-        // US07 - Escenario 1: mensaje exacto + cierre del formulario,
+        // US07 - Escenario 1: mensaje de éxito + cierre del formulario,
         // reflejando el cambio en la pantalla de detalle (vía pop con
         // el producto actualizado).
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Producto actualizado (Simulación)')),
+          const SnackBar(content: Text('Producto actualizado correctamente')),
         );
         Navigator.of(context).pop(updated);
       } else {
@@ -287,11 +287,7 @@ class _ProductFormBody extends StatelessWidget {
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Producto creado'),
-            content: Text(
-              'Se generó el producto con ID #${created.id} (simulación: '
-              'no se guardó realmente en el servidor ni aparecerá en el '
-              'catálogo general).',
-            ),
+            content: Text('El producto se guardó correctamente con el ID #${created.id}.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),

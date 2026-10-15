@@ -18,7 +18,7 @@ import 'product_form_view.dart';
 ///   automáticamente al catálogo.
 ///
 /// Regla de negocio: el rol se lee ESTRICTAMENTE de la sesión local
-/// (SessionController), nunca de la Fake Store API. Los botones de
+/// (SessionController), nunca de la API. Los botones de
 /// gestión no se instancian en absoluto si el rol no es Administrador
 /// (no se ocultan con Visibility/Opacity).
 class ProductDetailView extends StatelessWidget {
@@ -96,7 +96,7 @@ class _ProductDetailContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Regla de negocio de US05: el rol se lee de la sesión local, nunca
-    // de la Fake Store API.
+    // de la API.
     final role = context.watch<SessionController>().currentUser?.role;
     final isAdmin = role == Role.administrador;
 

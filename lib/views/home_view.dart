@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../controllers/catalog_controller.dart';
 import '../controllers/session_controller.dart';
 import '../models/product.dart';
 import '../models/role.dart';
@@ -41,7 +42,9 @@ class HomeView extends StatelessWidget {
       // pantalla protegida no vuelva a mostrarse tras cerrar sesión ni
       // se pueda "saltar" el login.
       canPop: false,
-      child: Scaffold(
+      child: ChangeNotifierProvider(
+        create: (_) => CatalogController()..initialize(),
+        child: Scaffold(
         appBar: AppBar(
           title: const Text('Inicio'),
           actions: [
@@ -109,14 +112,22 @@ class HomeView extends StatelessWidget {
         // US06: botón de alta de producto, exclusivo para Administrador.
         // No se instancia en absoluto para Cliente/Auditor.
         floatingActionButton: user.role == Role.administrador
-            ? FloatingActionButton.extended(
-                onPressed: () => Navigator.of(context).push<Product>(
-                  MaterialPageRoute(builder: (_) => const ProductFormView()),
+            ? Builder(
+                builder: (fabContext) => FloatingActionButton.extended(
+                  onPressed: () async {
+                    final catalog = fabContext.read<CatalogController>();
+                    await Navigator.of(fabContext).push<Product>(
+                      MaterialPageRoute(builder: (_) => const ProductFormView()),
+                    );
+                    // El producto nuevo ya está en la base de datos: se muestra en el catálogo.
+                    catalog.refresh();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nuevo producto'),
                 ),
-                icon: const Icon(Icons.add),
-                label: const Text('Nuevo producto'),
               )
             : null,
+        ),
       ),
     );
   }
@@ -124,7 +135,7 @@ class HomeView extends StatelessWidget {
 
 /// Fila compacta de icono + valor, usada para mostrar datos adicionales
 /// del usuario (nombre completo, teléfono) traídos de
-/// https://fakestoreapi.com/users.
+/// la base de datos (MySQL) a través del backend.
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String value;

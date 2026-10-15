@@ -1,4 +1,4 @@
-/// Entidad de dominio que representa un producto de Fake Store API.
+/// Entidad de dominio que representa un producto de la API.
 /// El mapeo respeta exactamente la estructura del JSON devuelto por
 /// GET /products (Regla de negocio de US03: "Mapeo del JSON").
 class Product {
